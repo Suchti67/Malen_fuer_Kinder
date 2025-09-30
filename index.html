@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>Malen für Kinder 🎨</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      margin: 0;
+      font-family: Comic Sans MS, sans-serif;
+      background-color: #fdf6e3;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    h1 {
+      font-size: 2em;
+      color: #4c4c4c;
+      margin: 10px;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      z-index: 2;
+    }
+
+    button, input[type="color"], input[type="range"] {
+      font-size: 1.1em;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+    }
+
+    button {
+      background-color: #ffd166;
+    }
+
+    button:hover {
+      background-color: #ffe599;
+    }
+
+    .color-palette {
+      display: flex;
+      gap: 5px;
+    }
+
+    .color-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 2px solid #333;
+      cursor: pointer;
+    }
+
+    canvas {
+      border: 3px solid #333;
+      background: white;
+      touch-action: none;
+      flex-grow: 1;
+      max-width: 95%;
+      max-height: 80%;
+    }
+  </style>
+</head>
+<body>
+  <h1>Male dein Kunstwerk! 🎨</h1>
+
+  <div class="toolbar">
+    <div class="color-palette">
+      <div class="color-btn" style="background:red" data-color="#ff0000"></div>
+      <div class="color-btn" style="background:orange" data-color="#ff9900"></div>
+      <div class="color-btn" style="background:yellow" data-color="#ffff00"></div>
+      <div class="color-btn" style="background:green" data-color="#00cc00"></div>
+      <div class="color-btn" style="background:blue" data-color="#0066ff"></div>
+      <div class="color-btn" style="background:purple" data-color="#800080"></div>
+      <div class="color-btn" style="background:pink" data-color="#ff66cc"></div>
+      <div class="color-btn" style="background:black" data-color="#000000"></div>
+    </div>
+    <label>
+      🎨 Mehr Farben:
+      <input type="color" id="colorPicker" value="#000000">
+    </label>
+    <label>
+      🔘 Größe:
+      <input type="range" id="brushSize" min="2" max="50" value="8">
+    </label>
+    <button onclick="clearCanvas()">🧼 Alles löschen</button>
+    <button onclick="saveCanvas()">💾 Speichern</button>
+  </div>
+
+  <canvas id="drawingCanvas"></canvas>
+
+  <script>
+    const canvas = document.getElementById("drawingCanvas");
+    const ctx = canvas.getContext("2d");
+    let painting = false;
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth * 0.95;
+      canvas.height = window.innerHeight * 0.75;
+      ctx.fillStyle = "white";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+
+    function getPointerPosition(e) {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return {
+        x: clientX - rect.left,
+        y: clientY - rect.top
+      };
+    }
+
+    function startPosition(e) {
+      e.preventDefault();
+      painting = true;
+      draw(e);
+    }
+
+    function endPosition(e) {
+      e.preventDefault();
+      painting = false;
+      ctx.beginPath();
+    }
+
+    function draw(e) {
+      if (!painting) return;
+      e.preventDefault();
+      const pos = getPointerPosition(e);
+      ctx.lineWidth = document.getElementById("brushSize").value;
+      ctx.lineCap = "round";
+      ctx.strokeStyle = document.getElementById("colorPicker").value;
+
+      ctx.lineTo(pos.x, pos.y);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(pos.x, pos.y);
+    }
+
+    function clearCanvas() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "white";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function saveCanvas() {
+      const link = document.createElement("a");
+      link.download = "mein_kunstwerk.png";
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    }
+
+    document.querySelectorAll(".color-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const color = btn.getAttribute("data-color");
+        document.getElementById("colorPicker").value = color;
+      });
+    });
+
+    canvas.addEventListener("mousedown", startPosition);
+    canvas.addEventListener("mouseup", endPosition);
+    canvas.addEventListener("mousemove", draw);
+
+    canvas.addEventListener("touchstart", startPosition, { passive: false });
+    canvas.addEventListener("touchend", endPosition, { passive: false });
+    canvas.addEventListener("touchmove", draw, { passive: false });
+  </script>
+</body>
+</html>
